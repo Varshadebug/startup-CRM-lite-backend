@@ -13,12 +13,31 @@ export const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Server error';
   let errors = null;
 
+  // Handle CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    statusCode = 403;
+    message = 'Cross-Origin Request Blocked by CORS policy';
+  }
+
+  // Handle MongoDB / Mongoose connection errors
+  if (
+    err.name === 'MongooseServerSelectionError' ||
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongoNotConnectedError' ||
+    (err.name === 'MongooseError' && err.message.includes('buffering timed out'))
+  ) {
+    statusCode = 503;
+    message = 'Database service temporarily unavailable. Please retry in a few moments.';
+  }
+
   // Handle Mongoose ValidationError
   if (err.name === 'ValidationError') {
     statusCode = 400;
     message = 'Validation Error';
     // Extract field-by-field error messages
-    errors = Object.values(err.errors).map(val => val.message);
+    if (err.errors) {
+      errors = Object.values(err.errors).map(val => val.message);
+    }
   }
 
   // Handle Mongoose CastError (invalid ObjectId)
@@ -48,7 +67,8 @@ export const errorHandler = (err, req, res, next) => {
 
   // In development: include err.stack in the response
   // In production: never send stack traces
-  if (process.env.NODE_ENV === 'development') {
+  const env = (process.env.NODE_ENV || 'development').trim();
+  if (env === 'development') {
     response.stack = err.stack;
   }
 
