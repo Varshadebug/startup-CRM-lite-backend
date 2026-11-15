@@ -74,6 +74,11 @@ export const connectDB = async (retryAttempt = 1, maxRetries = 5) => {
     return;
   }
 
+  if (mongoURI.includes('<') || mongoURI.includes('>')) {
+    console.error('⚠️  [CONFIGURATION ERROR] MONGODB_URI contains angle brackets ("<" or ">").');
+    console.error('👉 Ensure you replace <db_password> or <password> with your actual database password without the angle brackets!');
+  }
+
   const options = {
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 10000,
