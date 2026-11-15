@@ -176,14 +176,22 @@ const MODE = process.env.NODE_ENV?.trim() || 'development';
 
 let server;
 
-// Start HTTP server immediately so Render detects port binding
-server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT} in ${MODE} mode`);
-  console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-});
+const startServer = async () => {
+  // Connect to database first
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Initial MongoDB connection error:', err.message);
+  }
 
-// Connect to MongoDB Atlas asynchronously with non-blocking retry
-connectDB();
+  // Start HTTP server (ensures Render binds port without timing out even if DB is retrying)
+  server = app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT} in ${MODE} mode`);
+    console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+  });
+};
+
+startServer();
 
 // Graceful shutdown handling
 const gracefulShutdown = () => {

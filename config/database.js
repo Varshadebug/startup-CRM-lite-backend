@@ -85,6 +85,7 @@ export const connectDB = async (retryAttempt = 1, maxRetries = 5) => {
     await mongoose.connect(mongoURI, options);
     console.log(`🚀 MongoDB Atlas Connected: ${mongoose.connection.host}`);
     isConnecting = false;
+    return true;
   } catch (error) {
     isConnecting = false;
     console.error(`❌ Error connecting to MongoDB: ${error.message}`);
