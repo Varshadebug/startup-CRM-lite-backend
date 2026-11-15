@@ -149,9 +149,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// --- Database Readiness Middleware ---
+// Protects database-dependent operations from hanging or timing out while DB connects/reconnects
+const checkDatabaseReady = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection is initializing or temporarily unavailable. Please retry shortly.',
+      database: mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected'
+    });
+  }
+  next();
+};
+
 // --- Route Registration ---
-app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadRoutes);
+app.use('/api/auth', checkDatabaseReady, authRoutes);
+app.use('/api/leads', checkDatabaseReady, leadRoutes);
 
 // --- Error Handling ---
 // Register the global error handler middleware LAST (after all routes)
